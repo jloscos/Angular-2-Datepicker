@@ -216,7 +216,7 @@ interface ValidationResult {
                     'border': altInputStyle ? '' : '1px solid #dadada'}"
         (click)="onInputClick()"
         [(ngModel)]="inputText"
-        readonly="true"
+        (change)="parseInputText($event.target.value)"
       >
       <div
         class="datepicker__calendar"
@@ -312,7 +312,7 @@ interface ValidationResult {
     </div>
     `
 })
-export class DatepickerComponent implements OnInit, OnChanges {
+export class DatepickerComponent implements OnInit, OnChanges, OnDestroy {
   private readonly DEFAULT_FORMAT = 'YYYY-MM-DD';
 
   private dateVal: Date;
@@ -344,7 +344,7 @@ export class DatepickerComponent implements OnInit, OnChanges {
   // time
   @Input() calendarDays: Array<number>;
   @Input() currentMonth: string;
-  @Input() dayNames: Array<String> = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Default order: firstDayOfTheWeek = 0
+  @Input() dayNames: Array<String>;
   @Input() hoveredDay: Date;
   @Input() months: Array<string>;
   dayNamesOrdered: Array<String>;
@@ -374,6 +374,11 @@ export class DatepickerComponent implements OnInit, OnChanges {
     };
     this.accentColor = this.colors['blue'];
     this.altInputStyle = false;
+
+    this.dayNames = moment.weekdaysShort();
+    this.months = moment.months();
+    this.dateFormat = moment.localeData().longDateFormat("L");
+
     // time
     this.updateDayNames();
 
@@ -504,6 +509,20 @@ export class DatepickerComponent implements OnInit, OnChanges {
       inputText = dateFormat(date);
     }
     this.inputText = inputText;
+  }
+
+  /**
+   * Parse a string with the specified date format 
+   * and set the value with the parsed date if valid
+   */
+  parseInputText(value: string) {
+    if (typeof this.dateFormat === 'string')  {
+      const parsed = moment(value, this.dateFormat);
+      if (parsed.isValid()) {
+          this.date = parsed.toDate();
+      }
+    }
+    this.syncVisualsWithDate();
   }
 
   // -------------------------------------------------------------------------------- //
